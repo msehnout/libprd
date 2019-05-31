@@ -20,6 +20,9 @@ void fetch_pgp_key(const char* domain) {
         return;
     }
 
+    if(ub_ctx_resolvconf(ctx, NULL))
+        printf("Failed to load resolv.conf");
+
     /* query for webserver */
     retval = ub_resolve(ctx, domain,
                         61 /* TYPE OPENPGPKEY */,
@@ -29,9 +32,16 @@ void fetch_pgp_key(const char* domain) {
         return;
     }
 
+    printf("qname: %s, qtype: %d, qclass: %d, rcode: %d\n", result->qname, result->qtype, result->qclass, result->rcode);
+
     /* show first result */
     if(result->havedata)
         printf("The key is %s\n", result->data[0]);
+    else
+        printf("There is no data in the result.");
+
+    if(result->nxdomain)
+        printf("NXDOMAIN");
 
     printf("end");
 
