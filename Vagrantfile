@@ -15,4 +15,8 @@ SCRIPT
 Vagrant.configure("2") do |config|
   config.vm.box = "fedora-cloud-29-local"
   config.vm.provision "shell", inline: $script 
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 4096
+    v.cpus = 2
+  end
 end

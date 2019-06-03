@@ -1,14 +1,17 @@
 mod unbound;
 mod validator;
+mod email2domain;
 
 #[cfg(test)]
 mod tests {
     use crate::validator::Validator;
+    use crate::email2domain::*;
 
     #[test]
     fn resolve() {
         if let Some(mut v) = Validator::try_new() {
-            v.resolve("557d8ff0f0f4c6c9fc7140670cc85400dcee5aeb1ac2412e90f41e45._openpgpkey.fedoraproject.org")
+            let domain = email2domain("fedora-29@fedoraproject.org").unwrap();
+            v.resolve(&domain);
         } else {
             println!("epic fail");
         }
