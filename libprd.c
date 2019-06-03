@@ -69,18 +69,13 @@ char* prd_email_to_domain(const char* email) {
 
     unsigned char md[SHA256_DIGEST_LENGTH];
     SHA256((const unsigned char *)email, at_sign-email, md);
-    printf("HASH:");
-    for(size_t i=0; i<SHA256_DIGEST_LENGTH; i++) {
-        printf("%x", md[i]);
-    }
-    printf("\n");
 
     for(size_t i=0; i<28; i++) {
-        sprintf(ret+i, "%02X", md[i]);
+        sprintf(ret+(i*2), "%02x", md[i]);
     }
 
-    strcpy(ret+28, "._openpgpkey.");
-    strcpy(ret+41, at_sign+1);
+    strcpy(ret+56, "._openpgpkey.");
+    strcpy(ret+69, at_sign+1);
 
     return ret;
 }
