@@ -2,12 +2,18 @@ mod unbound;
 mod validator;
 mod email2domain;
 
+use std::ffi::CStr;
+use std::mem;
+use std::os::raw::c_char;
+use validator::Validator;
+
 pub struct KeyInfo {
     pub email: String,
     pub b64_key: String,
 }
 
 #[derive(Debug, PartialEq)]
+#[repr(C)]
 pub enum Validity {
     VALID = 1,
     REVOKED = 2,
@@ -15,6 +21,35 @@ pub enum Validity {
     RESULT_NOT_SECURE = 4,
     BOGUS_RESULT = 5,
     ERROR = 9,
+}
+
+#[repr(C)]
+pub struct KeyInfoC {
+    pub email: *const c_char,
+    pub b64_key: *const c_char,
+}
+
+#[no_mangle]
+pub extern "C" fn prd_validator_create() -> *mut Validator {
+    let validator = Box::new(Validator::try_new().unwrap());
+    Box::into_raw(validator)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn prd_validator_validate(validator: *mut Validator, key_info: *const KeyInfoC) -> Validity {
+    let mut validator = Box::from_raw(validator);
+    let ki = KeyInfo {
+        email: CStr::from_ptr((*key_info).email).to_string_lossy().into_owned(),
+        b64_key: CStr::from_ptr((*key_info).b64_key).to_string_lossy().into_owned(),
+    };
+    let validity = validator.validate(ki);
+    mem::forget(validator);
+    validity
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn prd_validator_destroy(ptr: *mut Validator) {
+    Box::from_raw(ptr);
 }
 
 #[cfg(test)]

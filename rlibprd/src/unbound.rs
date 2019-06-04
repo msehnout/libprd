@@ -3,7 +3,7 @@ use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
 
 #[repr(C)]
-pub struct ub_result {
+pub(crate) struct ub_result {
     /** The original question, name text string. */
     //char* qname;
     pub qname: *const c_char,
@@ -116,25 +116,25 @@ pub struct ub_result {
 }
 
 #[repr(C)]
-pub struct ub_ctx {
+pub(crate) struct ub_ctx {
     private: [u8; 0],
 }
 
 #[link(name = "unbound")]
 extern "C" {
-    pub fn ub_ctx_create() -> *mut ub_ctx;
-    pub fn ub_ctx_delete(ctx: *mut ub_ctx);
-    pub fn ub_ctx_resolvconf(ctx: *mut ub_ctx, fname: *const c_char) -> c_int;
-    pub fn ub_ctx_hosts(ctx: *mut ub_ctx, fname: *const c_char) -> c_int;
-    pub fn ub_ctx_add_ta_file(ctx: *mut ub_ctx, fname: *const c_char) -> c_int;
-    pub fn ub_resolve(
+    pub(crate) fn ub_ctx_create() -> *mut ub_ctx;
+    pub(crate) fn ub_ctx_delete(ctx: *mut ub_ctx);
+    pub(crate) fn ub_ctx_resolvconf(ctx: *mut ub_ctx, fname: *const c_char) -> c_int;
+    pub(crate) fn ub_ctx_hosts(ctx: *mut ub_ctx, fname: *const c_char) -> c_int;
+    pub(crate) fn ub_ctx_add_ta_file(ctx: *mut ub_ctx, fname: *const c_char) -> c_int;
+    pub(crate) fn ub_resolve(
         ctx: *mut ub_ctx,
         name: *const c_char,
         rrtype: c_int,
         rrclass: c_int,
         result: *mut *mut ub_result,
     ) -> c_int;
-    pub fn ub_strerror(err: c_int) -> *const c_char;
+    pub(crate) fn ub_strerror(err: c_int) -> *const c_char;
 }
 
 unsafe fn get_ub_strerror(err: c_int) -> String {
@@ -143,7 +143,7 @@ unsafe fn get_ub_strerror(err: c_int) -> String {
         .into_owned()
 }
 
-pub fn create_ub_ctx() -> Result<*mut ub_ctx, &'static str> {
+pub(crate) fn create_ub_ctx() -> Result<*mut ub_ctx, &'static str> {
     let mut ctx;
     unsafe {
         ctx = ub_ctx_create();

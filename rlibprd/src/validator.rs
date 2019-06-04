@@ -5,6 +5,7 @@ use data_encoding::BASE64;
 use std::ptr;
 use std::os::raw::{c_char, c_int};
 
+#[repr(C)]
 pub struct Validator {
     unbound_context: *mut ub_ctx,
 }
