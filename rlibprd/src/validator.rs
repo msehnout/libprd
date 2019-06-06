@@ -51,7 +51,6 @@ pub(crate) fn create_ub_ctx() -> Result<*mut ub_ctx, &'static str> {
 }
 
 /// The main object responsible for validation. Provided as an opaque struct for the C API.
-#[repr(C)]
 pub struct Validator {
     unbound_context: *mut ub_ctx,
 }

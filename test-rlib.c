@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "rlibprd/rlibprd.h"
+#include "rlibprd.h"
 
 const char* fedora_email = "fedora-29@fedoraproject.org";
 const char* fedora_key = "mQINBFqIZTcBEACjh0DKywPd0Hx9I4nGYsbUbqIU7TGZgxaT9jnVSRgkcdfRqt2C"
