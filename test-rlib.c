@@ -39,6 +39,11 @@ int main() {
 		printf("valid\n");
 	else
 		printf("sth else than valid\n");
+	r = prd_validator_validate(v, &k);
+	if (r == 1)
+		printf("valid\n");
+	else
+		printf("sth else than valid\n");
 	prd_validator_destroy(v);
 	printf("Finished\n");
 }

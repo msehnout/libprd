@@ -1,6 +1,4 @@
-use std::ffi::CStr;
 use std::os::raw::{c_char, c_int, c_void};
-use std::ptr;
 
 #[repr(C)]
 pub(crate) struct ub_result {
@@ -135,44 +133,4 @@ extern "C" {
         result: *mut *mut ub_result,
     ) -> c_int;
     pub(crate) fn ub_strerror(err: c_int) -> *const c_char;
-}
-
-unsafe fn get_ub_strerror(err: c_int) -> String {
-    CStr::from_ptr(ub_strerror(err))
-        .to_string_lossy()
-        .into_owned()
-}
-
-pub(crate) fn create_ub_ctx() -> Result<*mut ub_ctx, &'static str> {
-    let mut ctx;
-    unsafe {
-        ctx = ub_ctx_create();
-
-        if ctx.is_null() {
-            return Err("Failed to create context");
-        }
-
-        if ub_ctx_resolvconf(ctx, ptr::null()) != 0 {
-            ub_ctx_delete(ctx);
-            return Err("Failed to load resolv.conf");
-        }
-
-        let hosts = "/etc/hosts\0";
-        let retval = ub_ctx_hosts(ctx, hosts.as_ptr() as *const i8);
-        if retval != 0 {
-            eprintln!("Failed to load hosts: {}", get_ub_strerror(retval));
-            ub_ctx_delete(ctx);
-            return Err("Failed to load hosts");
-        }
-
-        let ta_file = "/etc/trusted-key.key\0";
-        let retval = ub_ctx_add_ta_file(ctx, ta_file.as_ptr() as *const i8);
-        if retval != 0 {
-            eprintln!("Failed to load ta_file: {}", get_ub_strerror(retval));
-            ub_ctx_delete(ctx);
-            return Err("Failed to load ta_file");
-        }
-    }
-    eprintln!("Successfully created unbound context");
-    Ok(ctx)
 }

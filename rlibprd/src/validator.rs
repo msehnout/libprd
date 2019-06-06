@@ -3,16 +3,62 @@ use crate::unbound::*;
 use crate::{KeyInfo, Validity};
 use data_encoding::BASE64;
 use std::ptr;
+use std::ffi::CStr;
 use std::os::raw::{c_char, c_int};
 
+/// Helper function to get errors from unbound
+unsafe fn get_ub_strerror(err: c_int) -> String {
+    CStr::from_ptr(ub_strerror(err))
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// Helper function to create preconfigured unbound context.
+/// 
+/// Make any changes regarding the configuration here. e.g. trust anchors, TLS forwarding ...
+pub(crate) fn create_ub_ctx() -> Result<*mut ub_ctx, &'static str> {
+    let ctx;
+    unsafe {
+        ctx = ub_ctx_create();
+
+        if ctx.is_null() {
+            return Err("Failed to create context");
+        }
+
+        if ub_ctx_resolvconf(ctx, ptr::null()) != 0 {
+            ub_ctx_delete(ctx);
+            return Err("Failed to load resolv.conf");
+        }
+
+        let hosts = "/etc/hosts\0";
+        let retval = ub_ctx_hosts(ctx, hosts.as_ptr() as *const i8);
+        if retval != 0 {
+            eprintln!("Failed to load hosts: {}", get_ub_strerror(retval));
+            ub_ctx_delete(ctx);
+            return Err("Failed to load hosts");
+        }
+
+        let ta_file = "/etc/trusted-key.key\0";
+        let retval = ub_ctx_add_ta_file(ctx, ta_file.as_ptr() as *const i8);
+        if retval != 0 {
+            eprintln!("Failed to load ta_file: {}", get_ub_strerror(retval));
+            ub_ctx_delete(ctx);
+            return Err("Failed to load ta_file");
+        }
+    }
+    eprintln!("Successfully created unbound context");
+    Ok(ctx)
+}
+
+/// The main object responsible for validation. Provided as an opaque struct for the C API.
 #[repr(C)]
 pub struct Validator {
     unbound_context: *mut ub_ctx,
 }
 
 impl Drop for Validator {
-    // add code here
     fn drop(&mut self) {
+        // We need to explicitly call Unbound API here.
         unsafe {
             ub_ctx_delete(self.unbound_context);
         }
@@ -20,12 +66,14 @@ impl Drop for Validator {
 }
 
 impl Validator {
+    /// Try to create new Validator object.
     pub fn try_new() -> Result<Validator, &'static str> {
         create_ub_ctx().map(|ctx| Validator{
             unbound_context: ctx,
         })
     }
 
+    /// Method for GPG key validation.
     pub fn validate(&mut self, key_info: KeyInfo) -> Validity {
         let mut result: *mut ub_result = ptr::null_mut();
         let domain = match email2domain(&key_info.email) {
