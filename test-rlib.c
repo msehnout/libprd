@@ -30,20 +30,23 @@ const char* fedora_key = "mQINBFqIZTcBEACjh0DKywPd0Hx9I4nGYsbUbqIU7TGZgxaT9jnVSR
 int main() {
 	printf("Starting\n");
 	Validator* v = prd_validator_create();
+	if (!v) {
+		printf("Failed\n");
+		return -1;
+	}
 	KeyInfoC k = {
 		.email = fedora_email,
 		.b64_key = fedora_key
 	};
-	Validity r = prd_validator_validate(v, &k);
-	if (r == 1)
-		printf("valid\n");
-	else
-		printf("sth else than valid\n");
-	r = prd_validator_validate(v, &k);
-	if (r == 1)
-		printf("valid\n");
-	else
-		printf("sth else than valid\n");
+	for (int i=0; i<3; ++i) {
+		Validity r = prd_validator_validate(v, &k);
+		if (r == 1)
+			printf("valid\n");
+		else
+			printf("sth else than valid\n");
+	}
 	prd_validator_destroy(v);
 	printf("Finished\n");
+
+	return 0;
 }

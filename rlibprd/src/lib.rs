@@ -12,6 +12,7 @@ mod tests;
 
 use std::ffi::CStr;
 use std::mem;
+use std::ptr;
 use std::os::raw::c_char;
 use validator::Validator;
 
@@ -44,8 +45,14 @@ pub struct KeyInfoC {
 /// Create a validator context, returns a pointer to a heap allocated structure
 #[no_mangle]
 pub extern "C" fn prd_validator_create() -> *mut Validator {
-    let validator = Box::new(Validator::try_new().unwrap());
-    Box::into_raw(validator)
+    match Validator::try_new() {
+        Ok(v) => Box::into_raw(Box::new(v)),
+        Err(e) => {
+            eprintln!("validator_create: {}", e);
+            ptr::null_mut()
+        }
+    }
+    
 }
 
 /// Validate a GPG key passed to the function as the KeyInfoC structure
